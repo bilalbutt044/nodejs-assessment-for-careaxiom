@@ -3,14 +3,18 @@ const url = require('url');
 const async = require("async")
 
 
-const { fetchTitle, generateHtmlResponse } = require('./util');
+const { fetchTitleWithPromise, generateHtmlResponse } = require('./util');
 
 // Define the hostname and port
 const hostname = '127.0.0.1';
 const port = 3000;
 
+
+
+
+
 // Create the server to accept HTTP requests
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const query = parsedUrl.query;
@@ -18,26 +22,19 @@ const server = http.createServer((req, res) => {
   if (pathname === '/I/want/title' || pathname === '/I/want/title/') {
     if (query.address) {
       const addresses = Array.isArray(query.address) ? query.address : [query.address];
-      let results = [];
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/html');
+      try {
+        // Use async.mapSeries to process each address sequentially
+        const results = await async.mapSeries(addresses, fetchTitleWithPromise);
 
-      async.eachSeries(addresses, (address, cb) => {
-        fetchTitle(address, (htmlResponse) => {
-          results.push(htmlResponse); // Store result
-          cb(); // Call the callback to move to the next address
-        });
-      }, (err) => {
-        // Final callback after all addresses have been processed
-        if (err) {
-          res.writeHead(500, { 'Content-Type': 'text/html' });
-          res.end('<h1>Error occurred while fetching titles</h1>');
-        } else {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          const htmlResponse = generateHtmlResponse(results)
-          res.end(htmlResponse);
-        }
-      });
+        // Send the response as HTML
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(generateHtmlResponse(results));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'text/html' });
+        res.end('<h1>Error occurred while fetching titles</h1>');
+      }
     } else {
       res.statusCode = 400;
       res.end('<html><body><h1>Please provide at least one address query parameter.</h1></body></html>');

@@ -1,6 +1,6 @@
 const http = require('http');
 const url = require('url');
-const { fetchTitle, generateHtmlResponse } = require('./util');
+const { fetchTitleWithCallback, generateHtmlResponse } = require('./util');
 
 // Define the hostname and port
 const hostname = '127.0.0.1';
@@ -22,7 +22,7 @@ const server = http.createServer((req, res) => {
       res.setHeader('Content-Type', 'text/html');
 
       addresses.forEach((address, index) => {
-        fetchTitle(address, (result) => {
+        fetchTitleWithCallback(address, (result) => {
           results[index] = result;  // Store each result in the correct index
           completedRequests += 1;
 

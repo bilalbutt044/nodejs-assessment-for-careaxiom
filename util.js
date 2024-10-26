@@ -36,7 +36,7 @@ function isValidUrl(string) {
 }
 
 // Function to fetch the title from a given URL using HTTPS
-function fetchTitle(targetUrl, callback) {
+function fetchTitleWithCallback(targetUrl, callback) {
   const normalizedUrl = normalizeUrl(targetUrl);
 
   if (!isValidUrl(normalizedUrl)) {
@@ -48,7 +48,7 @@ function fetchTitle(targetUrl, callback) {
     if (res.statusCode === 301 || res.statusCode === 302) {
       const location = res.headers.location;
       console.log(`Redirecting from ${normalizedUrl} to ${location}`);
-      return fetchTitle(location, callback); // Follow the redirect
+      return fetchTitleWithCallback(location, callback); // Follow the redirect
     }
 
     let data = '';
@@ -70,4 +70,42 @@ function fetchTitle(targetUrl, callback) {
 }
 
 
-module.exports = { fetchTitle, normalizeUrl, generateHtmlResponse };
+async function fetchTitleWithPromise(targetUrl) {
+  const normalizedUrl = normalizeUrl(targetUrl);
+
+  if (!isValidUrl(normalizedUrl)) {
+    return `<li>${targetUrl} - NO RESPONSE</li>`;
+  }
+
+  return new Promise((resolve) => {
+    https.get(normalizedUrl, (res) => {
+      // Follow redirects for 301 or 302 status codes
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        const location = res.headers.location;
+        console.log(`Redirecting from ${normalizedUrl} to ${location}`);
+        resolve(fetchTitleWithPromise(location)); // Follow the redirect
+        return;
+      }
+
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        const titleMatch = data.match(/<title>([^<]*)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          resolve(`<li>${targetUrl} - "${titleMatch[1]}"</li>`);
+        } else {
+          resolve(`<li>${targetUrl} - NO RESPONSE</li>`);
+        }
+      });
+    }).on('error', () => {
+      resolve(`<li>${targetUrl} - NO RESPONSE</li>`);
+    });
+  });
+
+}
+
+
+module.exports = { fetchTitleWithCallback, normalizeUrl, generateHtmlResponse, fetchTitleWithPromise };
