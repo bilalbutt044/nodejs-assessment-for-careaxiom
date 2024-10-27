@@ -1,9 +1,8 @@
 const http = require('http');
 const url = require('url');
-const { fetchTitle } = require('./callback-implementation');
 const fetchTitleWithAsync = require('./asyncjs-implementation');
 const fetchTitleWithRsvp = require('./rsvp-implementation');
-// const { fetchTitleWithCallback, generateHtmlResponse } = require('./util');
+const fetchTitleWithCallback = require('./callback-implementation');
 
 // Define the hostname and port
 const hostname = '127.0.0.1';
@@ -14,7 +13,6 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const query = parsedUrl.query;
-  let htmlResponse = []
 
   if (pathname === '/I/want/title' || pathname === '/I/want/title/') {
     if (query.address) {
@@ -24,12 +22,12 @@ const server = http.createServer(async (req, res) => {
 
 
       // callback implementation
-      // fetchTitle(addresses, (htmlResponse) => {
-      //   res.end(htmlResponse)
-      // })
+      fetchTitleWithCallback(addresses, (htmlResponse) => {
+        res.end(htmlResponse)
+      })
 
 
-      // async.js implementation
+      // uncomment below code to run async.js implementation
       // try {
       //   htmlResponse = await fetchTitleWithAsync(addresses)
       //   res.end(htmlResponse)
@@ -39,14 +37,14 @@ const server = http.createServer(async (req, res) => {
       // }
 
 
-      // RSVP.js implementation
-      try {
-        htmlResponse = await fetchTitleWithRsvp(addresses)
-        res.end(htmlResponse)
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'text/html' });
-        res.end('<h1>Error occurred while fetching titles</h1>');
-      }
+      // uncooment below code to run RSVP.js implementation
+      // try {
+      //   htmlResponse = await fetchTitleWithRsvp(addresses)
+      //   res.end(htmlResponse)
+      // } catch (err) {
+      //   res.writeHead(500, { 'Content-Type': 'text/html' });
+      //   res.end('<h1>Error occurred while fetching titles</h1>');
+      // }
 
     } else {
       res.statusCode = 400;
