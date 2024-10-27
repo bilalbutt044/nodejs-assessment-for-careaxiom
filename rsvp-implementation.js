@@ -1,46 +1,51 @@
-const http = require("http");
-const url = require("url");
+const https = require("https");
 const RSVP = require("rsvp");
 
-const { generateHtmlResponse, fetchTitle } = require("./util");
+const { generateHtmlResponse, normalizeUrl, isValidUrl } = require("./util");
 
-// Define the hostname and port
-const hostname = "127.0.0.1";
-const port = 3000;
 
-// Create the server to accept HTTP requests
-const server = http.createServer(async (req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
-  const query = parsedUrl.query;
+// Fetch the title from a given URL
+function fetchTitle(targetUrl) {
+  const normalizedUrl = normalizeUrl(targetUrl);
 
-  if (pathname === "/I/want/title" || pathname === "/I/want/title/") {
-    if (query.address) {
-      const addresses = Array.isArray(query.address) ? query.address : [query.address];
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "text/html");
-      try {
-        // Use async.mapSeries to process each address sequentially
-        const results = await RSVP.all(addresses.map(fetchTitle));
-
-        // Send the response as HTML
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end(generateHtmlResponse(results));
-      } catch (err) {
-        res.writeHead(500, { "Content-Type": "text/html" });
-        res.end("<h1>Error occurred while fetching titles</h1>");
-      }
-    } else {
-      res.statusCode = 400;
-      res.end("<html><body><h1>Please provide at least one address query parameter.</h1></body></html>");
-    }
-  } else {
-    res.statusCode = 404;
-    res.end("<html><body><h1>No route found</h1></body></html>");
+  if (!isValidUrl(normalizedUrl)) {
+    return RSVP.resolve(`<li>${targetUrl} - NO RESPONSE</li>`);
   }
-});
 
-// Start the server
-server.listen(port, hostname, () => {
-  console.log(`HTTP server running at http://${hostname}:${port}/`);
-});
+  return new RSVP.Promise((resolve) => {
+    https.get(normalizedUrl, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        const location = res.headers.location;
+        console.log(`Redirecting from ${normalizedUrl} to ${location}`);
+        resolve(fetchTitle(location)); // Follow the redirect
+        return;
+      }
+
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        const titleMatch = data.match(/<title>([^<]*)<\/title>/i);
+        if (titleMatch && titleMatch[1]) {
+          resolve(`<li>${targetUrl} - "${titleMatch[1]}"</li>`);
+        } else {
+          resolve(`<li>${targetUrl} - NO RESPONSE</li>`);
+        }
+      });
+    }).on('error', () => {
+      resolve(`<li>${targetUrl} - NO RESPONSE</li>`);
+    });
+  });
+}
+
+async function fetchTitleWithRsvp(urls) {
+  const results = await RSVP.all(urls.map(fetchTitle));
+  const htmlResponse = generateHtmlResponse(results);
+  return htmlResponse
+}
+
+module.exports = fetchTitleWithRsvp
+
+

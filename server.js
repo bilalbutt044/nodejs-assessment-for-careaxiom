@@ -2,6 +2,7 @@ const http = require('http');
 const url = require('url');
 const { fetchTitle } = require('./callback-implementation');
 const fetchTitleWithAsync = require('./asyncjs-implementation');
+const fetchTitleWithRsvp = require('./rsvp-implementation');
 // const { fetchTitleWithCallback, generateHtmlResponse } = require('./util');
 
 // Define the hostname and port
@@ -29,14 +30,23 @@ const server = http.createServer(async (req, res) => {
 
 
       // async.js implementation
+      // try {
+      //   htmlResponse = await fetchTitleWithAsync(addresses)
+      //   res.end(htmlResponse)
+      // } catch (err) {
+      //   res.writeHead(500, { 'Content-Type': 'text/html' });
+      //   res.end('<h1>Error occurred while fetching titles</h1>');
+      // }
+
+
+      // RSVP.js implementation
       try {
-        htmlResponse = await fetchTitleWithAsync(addresses)
+        htmlResponse = await fetchTitleWithRsvp(addresses)
         res.end(htmlResponse)
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/html' });
         res.end('<h1>Error occurred while fetching titles</h1>');
       }
-
 
     } else {
       res.statusCode = 400;
