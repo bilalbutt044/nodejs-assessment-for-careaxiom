@@ -148,4 +148,4 @@ function fetchTitle(targetUrl) {
 
 
 
-module.exports = { fetchTitleWithCallback, normalizeUrl, generateHtmlResponse, fetchTitleWithPromise, fetchTitle };
+module.exports = { isValidUrl, fetchTitleWithCallback, normalizeUrl, generateHtmlResponse, fetchTitleWithPromise, fetchTitle };
