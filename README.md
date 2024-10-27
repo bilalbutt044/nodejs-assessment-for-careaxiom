@@ -1,11 +1,7 @@
 # URL Title Fetcher
 
-This project fetches webpage titles from URLs provided as query parameters. The implementations demonstrate three different asynchronous methods: **callbacks**, **async.js**, and **RSVP promises**. Each method can be tested by toggling the import in the main server file.
+This project fetches webpage titles from URLs provided as query parameters. The implementations demonstrate three different asynchronous methods: **callbacks**, **async.js**, and **RSVP promises**. Each method can be tested by uncomment the code in server.js file.
 
-## Table of Contents
-- [Running the Server](#running-the-server)
-- [Testing Different Implementations](#testing-different-implementations)
-- [Usage](#usage)
 
 ---
 
