@@ -1,6 +1,7 @@
 const http = require('http');
 const url = require('url');
 const { fetchTitle } = require('./callback-implementation');
+const fetchTitleWithAsync = require('./asyncjs-implementation');
 // const { fetchTitleWithCallback, generateHtmlResponse } = require('./util');
 
 // Define the hostname and port
@@ -8,24 +9,33 @@ const hostname = '127.0.0.1';
 const port = 3000;
 
 // Create the server to accept HTTP requests
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const parsedUrl = url.parse(req.url, true);
   const pathname = parsedUrl.pathname;
   const query = parsedUrl.query;
+  let htmlResponse = []
 
   if (pathname === '/I/want/title' || pathname === '/I/want/title/') {
     if (query.address) {
       const addresses = Array.isArray(query.address) ? query.address : [query.address];
-      let results = [];
-      let completedRequests = 0;
-
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/html');
 
+
       // callback implementation
-      fetchTitle(addresses, (htmlResponse) => {
+      // fetchTitle(addresses, (htmlResponse) => {
+      //   res.end(htmlResponse)
+      // })
+
+
+      // async.js implementation
+      try {
+        htmlResponse = await fetchTitleWithAsync(addresses)
         res.end(htmlResponse)
-      })
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'text/html' });
+        res.end('<h1>Error occurred while fetching titles</h1>');
+      }
 
 
     } else {
